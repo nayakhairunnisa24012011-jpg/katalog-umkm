@@ -185,3 +185,38 @@ export async function ubahProduk(arg1, arg2, arg3) {
   revalidatePath("/admin");
   redirect("/admin");
 }
+
+export async function hapusProduk(idOrFormData) {
+  let id = null;
+  if (idOrFormData instanceof FormData) {
+    id = idOrFormData.get("id")?.toString();
+  } else if (typeof idOrFormData === "string" || typeof idOrFormData === "number") {
+    id = idOrFormData.toString();
+  } else if (idOrFormData && typeof idOrFormData === "object") {
+    id = idOrFormData.id?.toString();
+  }
+
+  if (!id) {
+    return { error: "ID produk tidak valid." };
+  }
+
+  const supabase = await createSessionClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: "Anda belum login atau sesi telah berakhir. Silakan login kembali." };
+  }
+
+  const { error } = await supabase
+    .from("produk")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message || "Gagal menghapus produk dari database." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { success: true };
+}

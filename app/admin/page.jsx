@@ -1,13 +1,23 @@
+import { redirect } from "next/navigation";
+import { createSessionClient } from "@/lib/supabase/session";
 import NavAdmin from "@/components/NavAdmin";
 import TabelProduk from "@/components/TabelProduk";
 import Tombol from "@/components/Tombol";
-import CatatanBelumAktif from "@/components/CatatanBelumAktif";
 import { produkContoh } from "@/lib/data-contoh";
 
-// US-06: halaman ini belum terlindungi. Siapa pun bisa membukanya.
-// Tugas peserta: hanya admin yang sudah login boleh membuka semua halaman /admin.
-export default function HalamanAdmin() {
-  // US-07 (bonus): daftar produk masih memakai data contoh, belum dari database.
+export const dynamic = "force-dynamic";
+
+export default async function HalamanAdmin() {
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    redirect("/admin/login");
+  }
+
   const daftarProduk = produkContoh;
 
   return (
@@ -18,9 +28,6 @@ export default function HalamanAdmin() {
         {/* US-08 (bonus): tambah produk */}
         <Tombol href="/admin/produk/baru">Tambah produk</Tombol>
       </div>
-      <CatatanBelumAktif>
-        Halaman admin belum terlindungi dan masih memakai data contoh: lihat US-06 dan US-07.
-      </CatatanBelumAktif>
       <TabelProduk daftarProduk={daftarProduk} />
     </div>
   );
